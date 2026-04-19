@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — AuthVault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0f;
+      --surface:  #111118;
+      --border:   #1f1f2e;
+      --accent:   #c8ff3e;
+      --accent2:  #3e8fff;
+      --text:     #e8e8f0;
+      --muted:    #6b6b80;
+      --error:    #ff4f6e;
+      --success:  #3ef0a0;
+      --radius:   4px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px 0;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(62,143,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(62,143,255,.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      animation: gridDrift 20s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes gridDrift { to { background-position: 48px 48px; } }
+
+    .glow-blob {
+      position: fixed; border-radius: 50%;
+      filter: blur(120px); pointer-events: none; opacity: .3;
+    }
+    .glow-blob.a { width:350px;height:350px; background:#3e8fff33; top:-60px; left:-60px; animation: blobA 9s ease-in-out infinite; }
+    .glow-blob.b { width:300px;height:300px; background:#c8ff3e22; bottom:-40px; right:-40px; animation: blobB 11s ease-in-out infinite; }
+    @keyframes blobA { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,30px)} }
+    @keyframes blobB { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-20px,-20px)} }
+
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 48px 44px 40px;
+      width: min(420px, 92vw);
+      animation: cardIn .6s cubic-bezier(.16,1,.3,1) both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+    .card::before {
+      content: '';
+      position: absolute; top:0; left:0; right:0; height:2px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+    }
+
+    .brand {
+      font-family: 'DM Serif Display', serif;
+      font-size: 11px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 32px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .brand::before { content:''; width:20px; height:1px; background: var(--accent2); display:block; }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px; font-weight: 400; line-height: 1.15;
+      margin-bottom: 8px;
+    }
+    h1 em { font-style: italic; color: var(--muted); }
+
+    .subtitle { font-size: 11px; color: var(--muted); letter-spacing: .08em; margin-bottom: 36px; }
+
+    .field { margin-bottom: 20px; }
+    label {
+      display: block; font-size: 10px; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+    }
+    input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      padding: 13px 16px;
+      outline: none;
+      border-radius: var(--radius);
+      transition: border-color .2s;
+    }
+    input:focus { border-color: var(--accent2); }
+    input.error-field { border-color: var(--error); }
+    input.ok-field    { border-color: var(--success); }
+    input::placeholder { color: var(--muted); opacity:.5; }
+
+    .field-error { font-size:11px; color:var(--error); margin-top:6px; min-height:16px; display:none; }
+    .field-error.visible { display:block; }
+
+    /* password strength bar */
+    .strength-bar { margin-top: 8px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .strength-fill { height:100%; width:0; border-radius:2px; transition: width .3s, background .3s; }
+
+    .strength-label { font-size:10px; color:var(--muted); margin-top:4px; height:14px; }
+
+    .btn {
+      width: 100%; margin-top: 28px; padding: 14px;
+      background: var(--accent2); color: #fff;
+      font-family: 'DM Mono', monospace; font-size: 12px; font-weight:500;
+      letter-spacing: .12em; text-transform: uppercase;
+      border: none; border-radius: var(--radius);
+      cursor: pointer; transition: opacity .2s, transform .15s;
+    }
+    .btn:hover:not(:disabled) { opacity:.85; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+
+    .btn .spinner { display:none; width:14px;height:14px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin .6s linear infinite; margin:0 auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn.loading .btn-text { display:none; }
+    .btn.loading .spinner  { display:block; }
+
+    .alert { padding:12px 16px; border-radius:var(--radius); font-size:12px; margin-top:20px; display:none; animation:fadeIn .3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .alert.error   { display:block; background:#ff4f6e14; border:1px solid #ff4f6e44; color:var(--error); }
+    .alert.success { display:block; background:#3ef0a014; border:1px solid #3ef0a044; color:var(--success); }
+
+    .footer-link { text-align:center; margin-top:28px; font-size:12px; color:var(--muted); }
+    .footer-link a { color:var(--accent); text-decoration:none; }
+    .footer-link a:hover { text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <div class="glow-blob a"></div>
+  <div class="glow-blob b"></div>
+
+  <div class="card">
+    <div class="brand">AuthVault</div>
+    <h1>Create your<br /><em>account.</em></h1>
+    <p class="subtitle">Fill in the details below to get started</p>
+
+    <div class="field">
+      <label for="email">Email address</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+      <div class="field-error" id="email-err"></div>
+    </div>
+
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="cooluser42" autocomplete="username" />
+      <div class="field-error" id="username-err"></div>
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Min. 8 characters" autocomplete="new-password" />
+      <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+      <div class="strength-label" id="strength-label"></div>
+      <div class="field-error" id="password-err"></div>
+    </div>
+
+    <div class="field">
+      <label for="confirm">Confirm password</label>
+      <input id="confirm" type="password" placeholder="Repeat your password" autocomplete="new-password" />
+      <div class="field-error" id="confirm-err"></div>
+    </div>
+
+    <button class="btn" id="submit-btn" type="button">
+      <span class="btn-text">Create Account</span>
+      <span class="spinner"></span>
+    </button>
+
+    <div class="alert" id="alert"></div>
+
+    <div class="footer-link">
+      Already have an account? <a href="/">Sign in →</a>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+
+    const fields = {
+      email:    { input: document.getElementById('email'),    err: document.getElementById('email-err') },
+      username: { input: document.getElementById('username'), err: document.getElementById('username-err') },
+      password: { input: document.getElementById('password'), err: document.getElementById('password-err') },
+      confirm:  { input: document.getElementById('confirm'),  err: document.getElementById('confirm-err') },
+    };
+    const alertEl       = document.getElementById('alert');
+    const btn           = document.getElementById('submit-btn');
+    const strengthFill  = document.getElementById('strength-fill');
+    const strengthLabel = document.getElementById('strength-label');
+
+    function setAlert(msg, type) { alertEl.className = 'alert ' + type; alertEl.textContent = msg; }
+    function clearAlert() { alertEl.className = 'alert'; }
+
+    function showFieldError(key, msg) {
+      fields[key].input.classList.add('error-field');
+      fields[key].input.classList.remove('ok-field');
+      fields[key].err.textContent = msg;
+      fields[key].err.classList.add('visible');
+    }
+    function clearFieldErrors() {
+      Object.values(fields).forEach(({ input, err }) => {
+        input.classList.remove('error-field', 'ok-field');
+        err.textContent = ''; err.classList.remove('visible');
+      });
+    }
+
+    function validateEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+    // Password strength
+    fields.password.input.addEventListener('input', () => {
+      const val = fields.password.input.value;
+      let score = 0;
+      if (val.length >= 8)  score++;
+      if (val.length >= 12) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+
+      const pct   = (score / 5) * 100;
+      const color = score <= 1 ? '#ff4f6e' : score <= 3 ? '#ffbe3e' : '#3ef0a0';
+      const label = score <= 1 ? 'Weak' : score <= 3 ? 'Moderate' : 'Strong';
+      strengthFill.style.width = pct + '%';
+      strengthFill.style.background = color;
+      strengthLabel.textContent = val ? label : '';
+      strengthLabel.style.color = color;
+    });
+
+    function validate() {
+      clearFieldErrors(); clearAlert();
+      let ok = true;
+      const email    = fields.email.input.value.trim();
+      const username = fields.username.input.value.trim();
+      const pass     = fields.password.input.value;
+      const confirm  = fields.confirm.input.value;
+
+      if (!email)               { showFieldError('email', 'Email is required'); ok=false; }
+      else if (!validateEmail(email)) { showFieldError('email', 'Enter a valid email address'); ok=false; }
+
+      if (!username)            { showFieldError('username', 'Username is required'); ok=false; }
+      else if (username.length < 3)   { showFieldError('username', 'Username must be at least 3 characters'); ok=false; }
+
+      if (!pass)                { showFieldError('password', 'Password is required'); ok=false; }
+      else if (pass.length < 8) { showFieldError('password', 'Password must be at least 8 characters'); ok=false; }
+
+      if (!confirm)             { showFieldError('confirm', 'Please confirm your password'); ok=false; }
+      else if (pass !== confirm) { showFieldError('confirm', 'Passwords do not match'); ok=false; }
+
+      return ok;
+    }
+
+    btn.addEventListener('click', async () => {
+      if (!validate()) return;
+      btn.classList.add('loading'); btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email:    fields.email.input.value.trim(),
+            username: fields.username.input.value.trim(),
+            password: fields.password.input.value,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('jwt_token', data.access_token);
+          localStorage.setItem('username', data.username);
+          setAlert(`✓ Account created for ${data.username}! Redirecting…`, 'success');
+          setTimeout(() => window.location.href = '/', 1800);
+        } else {
+          setAlert(data.detail || 'Registration failed', 'error');
+        }
+      } catch(e) {
+        setAlert('Network error — is the server running?', 'error');
+      } finally {
+        btn.classList.remove('loading'); btn.disabled = false;
+      }
+    });
+
+    Object.values(fields).forEach(({ input }) => input.addEventListener('keydown', e => { if(e.key==='Enter') btn.click(); }));
+  </script>
+</body>
+</html>
